@@ -7,12 +7,23 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-import java.util.Date;
-
 /**
- * Created by wangsm on 2018/6/29.
+ * Created by wangsm on 2018/7/2.
  */
-public class TimeServerHandler extends ChannelInboundHandlerAdapter {
+public class TimeClientHandler extends ChannelInboundHandlerAdapter {
+
+
+    private final ByteBuf firstMessage;
+
+
+    public TimeClientHandler() {
+
+        byte[] req = "QUERY TIME ORDER".getBytes();
+        firstMessage = Unpooled.buffer(req.length);
+        firstMessage.writeBytes(req);
+    }
+
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
@@ -20,21 +31,19 @@ public class TimeServerHandler extends ChannelInboundHandlerAdapter {
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         String body = new String(req, "UTF-8");
-        System.out.println("The time server receive order : " + body);
-        String currentTime = "QUERY TIME ORDER".equalsIgnoreCase(body) ? new Date(System.currentTimeMillis()).toString() : "BAD ORDER";
-        ByteBuf resp = Unpooled.copiedBuffer(currentTime.getBytes());
-        ctx.write(resp);
+        System.out.println("Now is :" + body);
+
     }
 
     @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        ctx.flush();
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        ctx.writeAndFlush(firstMessage);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+
+        //释放资源
         ctx.close();
     }
-
-
 }
